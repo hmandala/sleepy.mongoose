@@ -16,10 +16,7 @@ from SocketServer import BaseServer
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from handlers import MongoHandler
 
-try:
-    from OpenSSL import SSL
-except ImportError:
-    pass
+import ssl 
 
 import os.path, socket
 import urlparse
@@ -45,15 +42,9 @@ class MongoServer(HTTPServer):
     pem = None
 
     def __init__(self, server_address, HandlerClass):
-        BaseServer.__init__(self, server_address, HandlerClass)
-        ctx = SSL.Context(SSL.SSLv23_METHOD)
-
         fpem = MongoServer.pem
-        ctx.use_privatekey_file(fpem)
-        ctx.use_certificate_file(fpem)
-        
-        self.socket = SSL.Connection(ctx, socket.socket(self.address_family,
-                                                        self.socket_type))
+        BaseServer.__init__(self, server_address, HandlerClass)
+        self.socket = ssl.SSLSocket(sock=socket.socket(self.address_family,self.socket_type), ssl_version=ssl.PROTOCOL_SSLv23, certfile=fpem, keyfile=fpem, server_side=True)
         self.server_bind()
         self.server_activate()
 
